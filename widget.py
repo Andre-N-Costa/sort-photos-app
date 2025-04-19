@@ -14,6 +14,23 @@ class Widget(QWidget):
         Created all buttons and labels for main window
         """
 
+        self.repeats = {}
+
+        self.months = {
+        'Jan':'01',
+        'Feb':'02',
+        'Mar':'03',
+        'Apr':'04',
+        'May':'05',
+        'Jun':'06',
+        'Jul':'07',
+        'Aug':'08',
+        'Sep':'09',
+        'Oct':'10',
+        'Nov':'11',
+        'Dec':'12'
+        }
+
         self.folder_from_path = ""
         self.folder_to_path = ""
 
@@ -93,8 +110,10 @@ class Widget(QWidget):
                     modified_time = os.path.getmtime(itemPath)
                     readable_time = time.ctime(modified_time)
                     year = readable_time[-4:]
-                    month = readable_time[4:7].lstrip()
+                    month = self.months[readable_time[4:7].lstrip()]
                     day = readable_time[8:10].lstrip()
+                    if int(day) < 10:
+                        day = "0" + day
                     hour = readable_time[11:19]
 
                     #New name consists of modification name"-"hour"h"minute"m"second"s"
@@ -104,12 +123,17 @@ class Widget(QWidget):
                     if not os.path.exists(os.path.join(self.folder_to_path,year)):
                         os.makedirs(os.path.join(self.folder_to_path,year))
 
-                    if not os.path.exists(os.path.join(self.folder_to_path,year,month)):
-                        os.makedirs(os.path.join(self.folder_to_path,year,month))
+                    if not os.path.exists(os.path.join(self.folder_to_path,year,year + "-" + month)):
+                        os.makedirs(os.path.join(self.folder_to_path,year,year + "-" + month))
                     try:
-                        os.rename(itemPath,os.path.join(self.folder_to_path,year,month,name + "." + item.split('.')[1]))
+                        fileNewPath = os.path.join(self.folder_to_path,year,year + "-" + month,name + "." + item.split('.')[1])
+                        os.rename(itemPath,fileNewPath)
                     except FileExistsError:
-                        os.rename(itemPath,os.path.join(self.folder_to_path,year,month,name + "-1." + item.split('.')[1] ))
+                        if fileNewPath not in self.repeats:
+                            self.repeats[fileNewPath] = 1
+                        else:
+                            self.repeats[fileNewPath]+=1
+                        os.rename(itemPath,os.path.join(self.folder_to_path,year,year + "-" + month,name + "-" + str(self.repeats[fileNewPath]) +  "." + item.split('.')[1] ))
                 else:
                     #Get inside folders to move nested files
                     self.sortFilesRecursive(itemPath,self.folder_to_path)
@@ -127,19 +151,26 @@ class Widget(QWidget):
                 modified_time = os.path.getmtime(itemPath)
                 readable_time = time.ctime(modified_time)
                 year = readable_time[-4:]
-                month = readable_time[4:7].lstrip()
+                month = self.months[readable_time[4:7].lstrip()]
                 day = readable_time[8:10].lstrip()
+                if int(day) < 10:
+                    day = "0" + day
                 hour = readable_time[11:19]
                 name = day + "-" + hour[0:2] + "h" + hour[3:5] + "m" + hour[6:8] + "s"
 
                 if not os.path.exists(os.path.join(output,year)):
                     os.makedirs(os.path.join(output,year))
 
-                if not os.path.exists(os.path.join(output,year,month)):
-                    os.makedirs(os.path.join(output,year,month))
+                if not os.path.exists(os.path.join(output,year,year + "-" + month)):
+                    os.makedirs(os.path.join(output,year,year + "-" + month))
                 try:
-                    os.rename(itemPath,os.path.join(output,year,month,name + "." + item.split('.')[1]))
+                    fileNewPath = os.path.join(self.folder_to_path,year,year + "-" + month,name + "." + item.split('.')[1])
+                    os.rename(itemPath,fileNewPath)
                 except FileExistsError:
-                    os.rename(itemPath,os.path.join(output,year,month,name + "-1." + item.split('.')[1] ))
+                    if fileNewPath not in self.repeats:
+                        self.repeats[fileNewPath] = 1
+                    else:
+                        self.repeats[fileNewPath]+=1
+                    os.rename(itemPath,os.path.join(self.folder_to_path,year,year + "-" + month,name + "-" + str(self.repeats[fileNewPath]) +  "." + item.split('.')[1] ))
             else:
                 self.sortFilesRecursive(itemPath,output)
